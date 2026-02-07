@@ -1,0 +1,3 @@
+/home/fhoth2/c/cuda/tensor_sheet/build/CMakeFiles/maxine_tensor.dir
+/home/fhoth2/c/cuda/tensor_sheet/build/CMakeFiles/edit_cache.dir
+/home/fhoth2/c/cuda/tensor_sheet/build/CMakeFiles/rebuild_cache.dir

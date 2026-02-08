@@ -7,6 +7,15 @@
 #include "tensor.h"
 #include "loader.h"    // Now links correctly
 #include "tui.h"
+#include "sys/stat.h>"
+
+size_t get_file_size(const std::string& filename) {
+    struct stat st;
+    if (stat(filename.c_str(), &st) == 0) {
+        return st.st_size;
+    }
+    return 0;
+}
 
 int main(int argc, char* argv[]) {
     // ---------------------------------------------------------
@@ -40,6 +49,16 @@ int main(int argc, char* argv[]) {
     // ---------------------------------------------------------
     // 3. LOAD DATA
     // ---------------------------------------------------------
+    if (argc >= 2) {
+        active_file = argv[1];
+        size_t fsize = get_file_size(active_file);
+        if (fsize > 0) {
+            arena_size = fsize + (64 * 1024 * 1024); // Add 64MB buffer
+            std::cout << ">> Detected file size: " << (fsize / 1024 * 1024) << "MB\n";
+            std::cout << ">> Adjusted arena size to " << (arena_size / 1024 * 1024) << " MB for file loading.\n";
+            
+        }
+    }
     if (argc >= 5) {
         // PATH A: Command Line Loading (Manual Safety Load)
         active_file = argv[1];

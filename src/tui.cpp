@@ -22,6 +22,97 @@ const std::string ANSI_INVERT   = "\033[7m";
 const std::string ANSI_RESET    = "\033[0m";
 const std::string ANSI_CLEAR    = "\033[2J\033[1;1H";
 
+struct HelpEntry {
+	std::string command;
+	std::string args;
+	std::string desc;
+	std::string example;
+};
+
+// The database of Knowledge
+const std::vector<HelpEntry> HELP_DB = {
+// --- FILE OPERATIONS ---
+    {"new",    "d h w",       "Creates a new empty tensor (resizes memory).",   ":new 3 64 64"},
+    {"open",   "file d h w",  "Resizes memory AND loads a binary file.",        ":open dump.bin 1 128 128"},
+    {"load",   "file",        "Loads binary into CURRENT shape (no resize).",   ":load weights.bin"},
+    {"export", "file",        "Saves current layer to CSV format.",             ":export layer_1.csv"},
+    {"import", "file",        "Overwrites current layer from CSV file.",        ":import layer_1.csv"},
+    
+    // --- NAVIGATION & DIAGNOSTICS ---
+    {"goto",   "l r c",       "Teleports cursor/camera to coordinates.",        ":goto 0 500 120"},
+    {"health", "",            "Scans layer for NaNs, Infs, and Dead neurons.",  ":health"},
+    {"hist",   "",            "Plots ASCII histogram of value distribution.",   ":hist"},
+    {"stats",  "",            "Shows Min, Max, and Mean of current layer.",     ":stats"},
+    {"diff",   "file",        "Loads a comparison file (Ghost) for diffing.",   ":diff checkpoint.bin"},
+
+    // --- MATH & EDITING ---
+    {"clip",   "min max",     "Clamps all values to a specific range.",         ":clip -1.0 1.0"},
+    {"norm",   "",            "Normalizes layer to 0.0 - 1.0 range.",           ":norm"},
+    {"zero",   "",            "Sets all values in current layer to 0.0.",       ":zero"},
+    {"fill",   "val",         "Sets all values in current layer to 'val'.",     ":fill 3.14"},
+    {"relu",   "",            "Applies ReLU activation (max(0, x)).",           ":relu"},
+    {"sigmoid","",            "Applies Sigmoid activation (1 / 1+e^-x).",       ":sigmoid"},
+    
+    // --- META ---
+    {"help",   "[cmd]",       "Shows this list or details for a command.",      ":help goto"},
+    {"agent",  "",            "Dumps capabilities as JSON (Machine Readable).", ":agent_capabilities"}
+};
+void show_help_screen(bool as_json = false) {
+	std::cout << ANSI_CLEAR;
+
+	// Agent View (Machine Readable)
+	if (as_json) {
+		std::cout << "{\n \"tools\": [\n";
+		for(size_t i = 0; i < HELP_DB.size(); i++) {
+			const auto& h = HELP_DB[i];
+			std::cout << "    { \"name\": \"" << h.command << "\", "
+				  << "\"args\": \"" << h.args << "\", "
+				  << "\"description\": \"" << h.desc << "\" }";
+			if (i < HELP_DB.size() - 1) std::cout << ",";
+			std::cout << "\n";
+		}
+		std::cout << "  ]\n}\n";
+	}
+
+	// Human View (Pretty table)
+	else {
+		std::cout << ANSI_INVERT << " MAXINE HELP SYSTEM " << ANSI_RESET << "\n\n";
+		std::cout << std::left << std::setw(10) << "COMMAND"
+			  << std::left << std::setw(15) << "ARGS"
+			  << "DESCRIPTION" << "\n";
+		std::cout << "---------------------------------------------------------\n";
+
+		for (const auto& h : HELP_DB) {
+			std::cout << ANSI_YELLOW << std::setw(10) << h.command << ANSI_RESET
+				  << std::setw(15) << h.args
+				  << h.desc << "\n";
+		}
+		std::cout << "\n" << ANSI_CYAN << "Type ':help [command]' for examples." << ANSI_RESET << "\n";
+	}
+	std::cout << "\n(Press ENTER to return)";
+	std::cin.get();
+}
+// Headless mode: prints json and exits
+void tui_print_json_help() {
+	// Note: We do not use ANSI_CLEAR here because agent want raw text
+	std::cout << "{\n \"program\": \"Maxine Tensor Editor\",\n";
+	std::cout << "  \"version\": \"1.0.0\",\n";
+	std::cout << "  \"capabilities\": [\n";
+
+	for(size_t i = 0; i < HELP_DB.size(); i++) {
+		const auto& h = HELP_DB[i];
+		std::cout << "    { ";
+		std::cout << "\"comannd\": \"" << h.command << "\", ";
+		std::cout << "\"args\": \"" << h.args << "\", ";
+		std::cout << "\"description\": \"" << h.desc << "\"";
+		std::cout << " }";
+
+		if (i < HELP_DB.size() - 1) std::cout << ",";
+		std::cout << "\n";
+	}
+	std::cout << " ]\n}\n";
+}
+
 // --- RENDER VIEW ---
 // CHANGED: int -> size_t for all coordinates
 void render_view(Tensor& t, Tensor& t_ghost, size_t layer, size_t cur_row, size_t cur_col, 
@@ -120,8 +211,13 @@ void render_view(Tensor& t, Tensor& t_ghost, size_t layer, size_t cur_row, size_
 // --- COMMAND PROCESSOR ---
 // CHANGED: int& current_layer -> size_t& current_layer
 void process_command(Arena* a, Tensor& t, Tensor& t_ghost, bool& ghost_loaded, 
-                     size_t& current_layer, const std::string& cmd_line) {
+                     size_t& current_layer,
+		     size_t& cur_row, size_t& cur_col,
+		     size_t& scroll_row, size_t& scroll_col,
+		     const std::string& cmd_line) {
+
     std::stringstream ss(cmd_line);
+
     std::string action;
     ss >> action; 
     
@@ -158,6 +254,30 @@ void process_command(Arena* a, Tensor& t, Tensor& t_ghost, bool& ghost_loaded,
             std::cin.get();
         }
     }
+    else if(action == "goto" || action == "jump" || action == "g") {
+	size_t l, r, c;
+	if (ss >> l >> r >> c) {
+		// 1. Boundary checks
+		if (l >= t.shape[0]) l = t.shape[0] - 1;
+		if (r >= t.shape[1]) r = t.shape[1] - 1;
+		if (c >= t.shape[2]) c = t.shape[2] - 1;
+
+		// 2. Update Cursor
+		current_layer = l;
+		cur_row = r;
+		cur_col = c;
+		// 3. Center the Camera (Quality of life)
+		// We need access scroll/scroll_col variables.
+		scroll_row = (cur_row > 10) ? cur_row - 10 : 0;
+		scroll_col = (cur_col > 5)  ? cur_col - 5  : 0;
+
+		std::cout << "\n>> Jumped to [" << l << ", " << r << ", " << c << "]\n";
+	} else {
+		std::cout << "\n>> Usage: :goto [layer][row][col]\n";
+	}
+	std::cout << "(Press Enter)";
+	std::cin.get();
+}
 
     // COMMAND: :load
     else if (action == "load") {
@@ -392,6 +512,32 @@ void process_command(Arena* a, Tensor& t, Tensor& t_ghost, bool& ghost_loaded,
         std::cout << "  (Press ENTER)" << std::flush;
         std::cin.get();
     }
+    // Command: :help 
+    else if (action == "help" || action == "?") {
+	std::string topic;
+	
+	// Did they type ":help goto"?
+	if (ss >> topic) {
+		bool found = false;
+		for(const auto& h : HELP_DB) {
+			if (h.command == topic) {
+				std::cout << "\n>> HELP: " << ANSI_YELLOW << ":" << h.command << ANSI_RESET << "\n";
+				std::cout << "  Usage:  :" << h.command << " " << h.args << "\n";
+				std::cout << "  Effect:  " << h.desc << "\n";
+				std::cout << "  Example: " << ANSI_CYAN << h.example << ANSI_RESET << "\n";
+				found = true;
+				break;
+			}
+		}
+		if (!found) std::cout << "\n>> Unkown command '" << topic << "'.\n";
+		std::cout << "(Press Enter)";
+		std::cin.get();
+	} else {
+		show_help_screen(false);
+	}
+    } else if (action == "agent_capabilities") {
+	show_help_screen(true); // dumps json
+    }
 
     // COMMAND: :diff
     else if (action == "diff") {
@@ -565,6 +711,8 @@ void process_command(Arena* a, Tensor& t, Tensor& t_ghost, bool& ghost_loaded,
     }
 } 
 
+
+
 // --- MAIN LOOP ---
 void tui_loop(Arena* a, Tensor& t, const std::string& filename) {
     // CHANGED: int -> size_t
@@ -615,7 +763,9 @@ void tui_loop(Arena* a, Tensor& t, const std::string& filename) {
                 std::getline(std::cin, cmd_input);
 
                 if (!cmd_input.empty()) {
-                    process_command(a, t, t_ghost, ghost_loaded, cur_layer, cmd_input);
+                    process_command(a, t, t_ghost, ghost_loaded, cur_layer,
+				    cur_row, cur_col, scroll_row, scroll_col,
+				    cmd_input);
                     
                     if (cur_row >= t.shape[1]) cur_row = t.shape[1] - 1;
                     if (cur_col >= t.shape[2]) cur_col = t.shape[2] - 1;

@@ -156,18 +156,11 @@ CMakeFiles/maxine_tensor.dir/src/main.cpp.o: \
  /usr/include/c++/13/bits/locale_facets.tcc \
  /usr/include/c++/13/bits/basic_ios.tcc \
  /usr/include/c++/13/bits/ostream.tcc /usr/include/c++/13/istream \
- /usr/include/c++/13/bits/istream.tcc \
- /home/fhoth2/c/cuda/tensor_sheet/include/arena.h \
- /usr/include/c++/13/cstdint \
- /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h /usr/include/stdint.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
- /home/fhoth2/c/cuda/tensor_sheet/include/tensor.h \
- /usr/include/c++/13/vector /usr/include/c++/13/bits/stl_uninitialized.h \
+ /usr/include/c++/13/bits/istream.tcc /usr/include/c++/13/vector \
+ /usr/include/c++/13/bits/stl_uninitialized.h \
  /usr/include/c++/13/bits/stl_vector.h \
  /usr/include/c++/13/bits/stl_bvector.h \
- /usr/include/c++/13/bits/vector.tcc \
- /home/fhoth2/c/cuda/tensor_sheet/include/loader.h /usr/include/unistd.h \
+ /usr/include/c++/13/bits/vector.tcc /usr/include/unistd.h \
  /usr/include/x86_64-linux-gnu/bits/posix_opt.h \
  /usr/include/x86_64-linux-gnu/bits/environments.h \
  /usr/include/x86_64-linux-gnu/bits/confname.h \
@@ -176,4 +169,12 @@ CMakeFiles/maxine_tensor.dir/src/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/unistd.h \
  /usr/include/x86_64-linux-gnu/bits/unistd-decl.h \
  /usr/include/x86_64-linux-gnu/bits/unistd_ext.h \
- /usr/include/linux/close_range.h
+ /usr/include/linux/close_range.h \
+ /home/fhoth2/c/cuda/tensor_sheet/include/arena.h \
+ /usr/include/c++/13/cstdint \
+ /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h /usr/include/stdint.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
+ /home/fhoth2/c/cuda/tensor_sheet/include/tensor.h \
+ /home/fhoth2/c/cuda/tensor_sheet/include/loader.h \
+ /home/fhoth2/c/cuda/tensor_sheet/include/tui.h

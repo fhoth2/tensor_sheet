@@ -40,7 +40,7 @@ Maxine is a single C++ binary with no external library dependencies.
 
 ```bash
 # Clone
-git clone [https://github.com/yourusername/maxine.git](https://github.com/yourusername/maxine.git)
+git clone [https://github.com/fhoth2/maxine.git](https://github.com/fhoth2/maxine.git)
 cd maxine
 
 # Build (Requires CMake)

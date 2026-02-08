@@ -11,7 +11,7 @@ It is designed for the "Microscope" workflow: diagnosing why a specific layer in
 * **Visual Debugging:** * **Heatmaps:** Instantly spot "hot" or "dead" neurons using ANSI colors.
     * **Diffing:** Compare two tensor files to see exactly which weights changed.
     * **Histograms:** Visual ASCII bar charts of value distributions.
-* **Big Data Ready:** Supports 64-bit addressing to handle massive tensor files (100GB+).
+
 <img width="1007" height="591" alt="Screenshot 2026-02-07 065013" src="https://github.com/user-attachments/assets/8f7e2960-748a-4fb5-b061-cdce2560e032" />
 <img width="861" height="468" alt="Screenshot 2026-02-07 062433" src="https://github.com/user-attachments/assets/ce50536f-4ea9-4a10-8592-cf9f886c3282" />
 <img width="890" height="574" alt="Screenshot 2026-02-07 061047" src="https://github.com/user-attachments/assets/d8e43530-f4a3-413d-9607-94295da5a941" />
